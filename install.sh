@@ -24,7 +24,7 @@ if [[ ${OS:-} = "Windows_NT" ]]; then
     error "Please install using Windows Subsystem for Linux"
 fi
 
-GITHUB_REPO="https://github.com/sanurb/gcom/blob/main/gcom.sh"
+GITHUB_REPO="https://raw.githubusercontent.com/sanurb/gcom/main/gcom.sh"
 INSTALL_DIR="$HOME/.local/bin"
 EXECUTABLE_NAME="gcom"
 
