@@ -62,16 +62,45 @@ sync_commit() {
     git push
 }
 
+browse_recent_branches() {
+    check_git_repository
+
+    if ! command -v fzf >/dev/null 2>&1; then
+        print_colorful_message "31" "Error: fzf is not installed. Please install fzf to use this feature."
+        exit 1
+    fi
+
+    print_colorful_message "34" "Fetching recent branches..."
+    
+    origin_HEAD=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+
+    chosen_branch=$(git for-each-ref --color=always --sort=-committerdate refs/heads/ \
+        --format="%(color:yellow)%(refname:short)%(color:reset)" | \
+        fzf --ansi --layout=reverse --height=90% --min-height=20 \
+            --border-label "🌿 Recent Branches" --border \
+            --preview "git log --oneline --graph --color=always --decorate {1}" \
+            --bind "ctrl-o:execute(git diff --color=always $origin_HEAD...{1} | less -R)")
+
+    if [[ -n "$chosen_branch" ]]; then
+        print_colorful_message "32" "Switching to branch: $chosen_branch"
+        git checkout "$chosen_branch"
+    fi
+}
+
+show_help() {
+    echo "Usage: $(basename "$0") [OPTION]"
+    echo "  -a      Commit all files in separate commits"
+    echo "  -b      Commit all files in a backup commit"
+    echo "  -s      Sync commits (pull, backup commit, push)"
+    echo "  -r      Browse and checkout recent branches using fzf"
+    echo "  -h      Show this help message"
+}
+
 case $1 in
     -a) batch_commit ;;
     -b) backup_commit ;;
     -s) sync_commit ;;
-    -h | --help)
-        echo "Usage: $(basename "$0") [OPTION]"
-        echo "  -a      Commit all files in separate commits"
-        echo "  -b      Commit all files in a backup commit"
-        echo "  -s      Sync commits (pull, backup commit, push)"
-        echo "  -h      Show this help message"
-        ;;
+    -r) browse_recent_branches ;;
+    -h | --help) show_help ;;
     *) select_commit ;;
 esac
